@@ -1,0 +1,23 @@
+Column_Name,Description,Expected_Data_Type,Example_Value,Potential_Issues
+Patient_ID,Identifier assigned to a patient,Text,P04189,"Check for missing IDs, inconsistent formats, duplicates and repeated patients across visits"
+Visit_Date,Date of the hospital visit or admission,Date,2023-09-15,"Check for missing, invalid, future or inconsistently formatted dates"
+Age,Patient age at the time of the visit,Integer,37,"Check for missing, negative, non-numeric or unrealistic ages"
+Gender,Recorded gender of the patient,Text,Female,"Check for missing values, spelling differences, abbreviations and inconsistent capitalisation"
+Disease,Primary disease or condition associated with the visit,Text,Gastritis,"Check for missing values, inconsistent spelling, duplicate categories and leading or trailing spaces"
+Severity,Recorded severity level of the patient condition,Text,Moderate,"Check for missing values, unexpected categories, inconsistent spelling and capitalisation"
+Admission_Type,Type of hospital admission or visit,Text,Inpatient,"Check for missing values, invalid categories and inconsistent labels"
+Length_of_Stay,Number of days the patient remained in hospital,Integer,3,"Check for missing, negative, zero or unusually large values and values stored as text"
+Bed_Required,Indicates whether the patient required a hospital bed,Boolean,Yes,"Check for missing values and inconsistent representations such as Yes, Y, 1 or TRUE"
+ICU_Required,Indicates whether the patient required intensive care,Boolean,No,Check for missing values and inconsistent Yes or No representations
+Oxygen_Required,Indicates whether the patient required oxygen support,Boolean,No,Check for missing values and inconsistent Yes or No representations
+Ventilator_Required,Indicates whether the patient required ventilator support,Boolean,No,Check for missing values and inconsistent Yes or No representations
+Total_Beds_Available,Total number of hospital beds available,Integer,160,"Check for missing, negative, zero or unrealistic values and inconsistent values for the same period"
+Beds_Occupied,Number of hospital beds occupied,Integer,95,Check for missing or negative values and values greater than total beds available
+ICU_Beds_Available,Total number of ICU beds available,Integer,38,"Check for missing, negative or unrealistic values"
+ICU_Beds_Occupied,Number of ICU beds occupied,Integer,19,Check for missing or negative values and values greater than ICU beds available
+Oxygen_Units_Used,Number of oxygen units used for the visit or reporting period,Integer,0,"Check for missing, negative or unusually high values and clarify the unit of measurement"
+Month,Numeric month associated with the visit date,Integer,9,"Check for missing values, numbers outside 1 to 12 and disagreement with Visit_Date"
+Season,Season associated with the visit,Text,Monsoon,"Check for missing values, unexpected categories, spelling differences and whether categories fit the dataset location"
+Day_of_Week,Day of the week associated with the visit,Text,Friday,"Check for missing values, spelling differences and disagreement with Visit_Date"
+Department,Hospital department responsible for the visit,Text,Gastroenterology,"Check for missing values, inconsistent spelling, abbreviations and leading or trailing spaces"
+Readmission_Within_30_Days,Indicates whether the patient was readmitted within 30 days,Boolean,No,"Check for missing values, inconsistent Yes or No representations and whether repeat patient records support the value"
