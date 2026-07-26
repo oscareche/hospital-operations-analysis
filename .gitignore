@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Environment variables and secrets
+.env
+.venv/
+venv/
+
+# Python cache and generated files
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Temporary Excel files
+~$*
+
+# Temporary SQL backups
+*.sql.bak
