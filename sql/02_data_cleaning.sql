@@ -3,13 +3,19 @@ DROP TABLE IF EXISTS hospital_operations.hospital_operations_clean;
 CREATE TABLE hospital_operations.hospital_operations_clean AS
 SELECT
     Patient_ID,
+    
+-- Standardise three date formats found in the raw data:
+-- YYYY-MM-DD, DD-MM-YYYY and YYYY/MM/DD.
+    
     CASE
-        WHEN Visit_Date REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-            THEN STR_TO_DATE(Visit_Date, '%Y-%m-%d')
-        WHEN Visit_Date REGEXP '^[0-9]{2}-[0-9]{2}-[0-9]{4}$'
-            THEN STR_TO_DATE(Visit_Date, '%d-%m-%Y')
-        ELSE NULL
-    END AS Visit_Date,
+    WHEN Visit_Date REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+        THEN STR_TO_DATE(Visit_Date, '%Y-%m-%d')
+    WHEN Visit_Date REGEXP '^[0-9]{2}-[0-9]{2}-[0-9]{4}$'
+        THEN STR_TO_DATE(Visit_Date, '%d-%m-%Y')
+    WHEN Visit_Date REGEXP '^[0-9]{4}/[0-9]{2}/[0-9]{2}$'
+        THEN STR_TO_DATE(Visit_Date, '%Y/%m/%d')
+    ELSE NULL
+END AS Visit_Date,
     CAST(Age AS UNSIGNED) AS Age,
     Gender,
     Disease,
@@ -64,3 +70,12 @@ FROM hospital_operations_clean;
 -- Final row-count validation:
 -- The cleaned table contains all 5,075 source records.
 -- No rows were lost during cleaning and type conversion.
+
+SELECT COUNT(*) AS missing_visit_dates
+FROM hospital_operations_clean
+WHERE Visit_Date IS NULL;
+
+-- Validation result:
+-- All 25 previously missing Visit_Date values were recovered
+-- after adding support for the YYYY/MM/DD date format.
+-- The cleaned table now contains no NULL visit dates.
