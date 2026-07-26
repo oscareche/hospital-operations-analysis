@@ -19,3 +19,10 @@ Kaggle: Hospital Operations Dataset - Unclean Data
 
 ## Current phase
 Dataset understanding and initial inspection
+
+## Dataset grain
+Each row appears to represent one hospital visit or admission event. A patient may appear in multiple rows if they have more than one visit.
+
+## Dataset dimensions
+- Rows: 5,076
+- Columns: 22
