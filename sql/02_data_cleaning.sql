@@ -17,10 +17,10 @@ SELECT
     ELSE NULL
 END AS Visit_Date,
     CAST(Age AS UNSIGNED) AS Age,
-    Gender,
-    Disease,
-    Severity,
-    Admission_Type,
+    NULLIF(TRIM(Gender), '') AS Gender,
+	NULLIF(TRIM(Disease), '') AS Disease,
+	NULLIF(TRIM(Severity), '') AS Severity,
+	NULLIF(TRIM(Admission_Type), '') AS Admission_Type,
     CAST(NULLIF(TRIM(Length_of_Stay), '') AS UNSIGNED) AS Length_of_Stay,
     Bed_Required,
     ICU_Required,
@@ -31,11 +31,11 @@ END AS Visit_Date,
     CAST(ICU_Beds_Available AS UNSIGNED) AS ICU_Beds_Available,
     CAST(ICU_Beds_Occupied AS UNSIGNED) AS ICU_Beds_Occupied,
     CAST(NULLIF(TRIM(Oxygen_Units_Used), '') AS UNSIGNED) AS Oxygen_Units_Used,
-    Month,
-    Season,
-    Day_of_Week,
-    Department,
-    Readmission_Within_30_Days
+    NULLIF(TRIM(Month), '') AS Month,
+	NULLIF(TRIM(Season), '') AS Season,
+	NULLIF(TRIM(Day_of_Week), '') AS Day_of_Week,
+	NULLIF(TRIM(Department), '') AS Department,
+	NULLIF(TRIM(Readmission_Within_30_Days), '') AS Readmission_Within_30_Days
 FROM hospital_operations.hospital_operations_raw;
 
 -- =========================================================
