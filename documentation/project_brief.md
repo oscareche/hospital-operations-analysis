@@ -1,4 +1,4 @@
-# Hospital Operations Analysis
+# Hospital Operations Analysis Project
 
 ## Project overview
 This project examines an unclean hospital operations dataset containing information across multiple areas of hospital activity. The analysis will follow an end-to-end workflow covering data profiling, cleaning, validation, exploratory analysis and reporting.

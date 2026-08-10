@@ -9,7 +9,7 @@ USE hospital_operations;
 
 DROP TABLE IF EXISTS hospital_operations_raw;
 
--- SQL automatically created the databses with the incorrect data type
+-- SQL automatically created the databses with the incorrect data types
 -- I have had to run a query to drop the table and create a new hospital ops data
 -- table with fields data type as text because are unsure as to what data type the raw table is in
 
