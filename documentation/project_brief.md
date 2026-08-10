@@ -1,28 +1,151 @@
 # Hospital Operations Analysis Project
 
-## Project overview
-This project examines an unclean hospital operations dataset containing information across multiple areas of hospital activity. The analysis will follow an end-to-end workflow covering data profiling, cleaning, validation, exploratory analysis and reporting.
+## 1. Business Context
+Hospital operations teams need clear visibility into how patient demand translates into the use of beds, ICU capacity, oxygen, ventilation and other critical resources.
 
-## Project objective
-To clean, validate and analyse the hospital operations dataset using SQL and Python, with the aim of identifying operational patterns, data quality issues and performance insights that could support better resource planning and management decision-making.
+Without a structured view of demand and resource utilisation, it can be difficult to identify where operational pressure is concentrated, how resource requirements vary across departments, and where capacity planning may need greater attention.
 
-## Dataset source
-Kaggle: Hospital Operations Dataset - Unclean Data
+This project analyses historical hospital visit data to identify operational patterns that could support more informed capacity-planning and resource-management decisions.
 
-## Tools
+
+## 2. Business Objectives
+The business objective is to identify patterns in patient demand and hospital resource utilisation to understand where operational resouces should be allocated and where it is highest and provide evidence that could support capacity-planning decisions.
+
+
+## 3. Key Business Questions
+The analysis will focus on the following questions:
+
+1. Which departments and admission types experience the highest volume of hospital visits?
+2. How does length of stay vary across departments, admission types and disease severity?
+3. How heavily are available hospital beds and ICU beds utilised?
+4. Which departments or patient groups have the greatest requirement for ICU care, oxygen and ventilation?
+5. Are there identifiable monthly, seasonal or day-of-week patterns in patient demand?
+6. Which factors appear to be associated with greater hospital resource utilisation?
+7. What patterns exist in 30-day readmissions?
+8. Are there data-quality issues that could affect the reliability of these conclusions?
+
+
+## 4. Analytical Scope
+
+### In Scope
+
+The analysis will examine:
+
+- Hospital visits and admissions
+- Patient demographics
+- Disease and severity
+- Admission type
+- Department
+- Length of stay
+- Bed availability and occupancy
+- ICU availability and occupancy
+- ICU requirement
+- Oxygen requirement and usage
+- Ventilator requirement
+- Time-based demand patterns
+- 30-day readmissions
+
+### Out of Scope
+
+The dataset does not contain sufficient information to evaluate:
+
+- Staffing levels or staff productivity
+- Treatment effectiveness
+- Financial cost or profitability
+- Clinical outcomes beyond the available readmission field
+- Real-time or hourly capacity utilisation
+- Hospital-site comparisons
+- Causal relationships between patient characteristics and outcomes
+
+The analysis will therefore focus on descriptive and exploratory operational insights rather than causal or clinical conclusions.
+
+
+## 5. Dataset
+
+**Source:** Kaggle – Hospital Operations Dataset – Unclean Data
+
+The imported dataset contains:
+
+- 5,075 hospital visit records
+- 22 fields
+
+The raw data is stored in:
+
+`hospital_operations_raw`
+
+All raw fields are initially stored as TEXT to preserve source values before data-quality assessment and cleaning.
+
+## 6. Dataset Grain
+
+Each row represents one hospital visit or admission event.
+
+A patient may appear in more than one row if they have multiple hospital visits.
+
+Therefore:
+
+- `COUNT(*)` represents visit or encounter volume.
+- `COUNT(DISTINCT Patient_ID)` represents unique patients.
+
+This distinction will be maintained throughout the analysis.
+
+
+## 7. Data Quality Approach
+
+The raw dataset will not be modified directly.
+
+The workflow will be:
+
+1. Preserve the original data in `hospital_operations_raw`.
+2. Profile the raw data for missing, inconsistent, duplicate and invalid values.
+3. Document data-quality findings.
+4. Define cleaning rules based on analytical requirements.
+5. Create a separate cleaned table.
+6. Validate the cleaned dataset before analysis.
+
+Cleaning decisions will be documented rather than applied automatically.
+
+
+## 8. Analytical Deliverables
+
+The project is expected to produce:
+
+- Reproducible SQL scripts
+- Data-quality documentation
+- A validated cleaned dataset
+- Exploratory analysis
+- Operational KPIs
+- Visualisations/dashboard
+- Business findings and recommendations
+- A GitHub portfolio repository documenting the analytical workflow
+
+
+## 9. Success Criteria
+
+The project will be considered successful if it:
+
+- Produces a reproducible raw-to-clean data workflow.
+- Identifies and documents material data-quality issues.
+- Clearly distinguishes hospital visits from unique patients.
+- Produces reliable operational metrics for demand and resource utilisation.
+- Answers the agreed business questions using validated data.
+- Communicates findings in a form that could support operational decision-making.
+
+
+## 10. Tools
+
 - MySQL
+- VS Code
+- SQLTools
 - Python
-- Excel
 - Power BI
 - Git
 - GitHub
 
-## Current phase
-Dataset understanding and initial inspection
 
-## Dataset grain
-Each row appears to represent one hospital visit or admission event. A patient may appear in multiple rows if they have more than one visit.
+## 11. Current Project Phase
 
-## Dataset dimensions
-- Rows: 5,076
-- Columns: 22
+**Current phase:** Raw data understanding and profiling.
+
+The database and raw ingestion layer have been established and validated.
+
+The next stage is to profile the fields required by the business questions before defining any cleaning rules.
