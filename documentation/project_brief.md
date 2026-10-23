@@ -144,8 +144,6 @@ The project will be considered successful if it:
 
 ## 11. Current Project Phase
 
-**Current phase:** Raw data understanding and profiling.
+**Current phase:** Exploratory analysis complete.
 
-The database and raw ingestion layer have been established and validated.
-
-The next stage is to profile the fields required by the business questions before defining any cleaning rules.
+Profiling, cleaning, validation and exploratory analysis are scripted in `sql/01` to `sql/05`. Findings and recommendations are in the README. A Power BI dashboard is the remaining deliverable.

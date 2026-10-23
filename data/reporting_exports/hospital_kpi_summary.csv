@@ -1,2 +1,2 @@
 total_patient_records,total_visit_dates,earliest_visit_date,latest_visit_date,average_length_of_stay,readmission_percentage,bed_required_percentage,icu_required_percentage,oxygen_required_percentage,ventilator_required_percentage
-5075,730,2023-01-01,2024-12-31,5.10,13.85,66.03,19.47,30.72,6.17
+5000,730,2023-01-01,2024-12-31,5.11,13.82,65.98,19.48,30.78,6.20

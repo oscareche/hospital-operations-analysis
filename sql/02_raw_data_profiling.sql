@@ -268,15 +268,47 @@ SELECT
         AND CAST(ICU_Beds_Occupied AS UNSIGNED) > CAST(ICU_Beds_Available AS UNSIGNED)
     ) AS icu_occupancy_over_capacity
 FROM hospital_operations_raw;
-SELECT 
-    COUNT(*) AS Duplicate_Patient_IDs
-FROM
-    (SELECT 
-        Patient_ID
-    FROM
-        hospital_operations_raw
-    GROUP BY Patient_ID
-    HAVING COUNT(*) > 1) AS duplicated_patients;
 
+-- Review ages at the extremes of the recorded range.
 
+SELECT TRIM(Age) AS age, COUNT(*) AS row_count
+FROM hospital_operations_raw
+WHERE CAST(TRIM(Age) AS SIGNED) = 0
+   OR CAST(TRIM(Age) AS SIGNED) > 100
+GROUP BY TRIM(Age)
+ORDER BY CAST(TRIM(Age) AS SIGNED);
+
+-- Check length of stay against admission type. OPD visits are expected to be same-day.
+
+SELECT
+    UPPER(TRIM(Admission_Type)) AS admission_type,
+    SUM(TRIM(Length_of_Stay) = '0') AS zero_day_stays,
+    SUM(TRIM(Length_of_Stay) REGEXP '^[0-9]+$' AND CAST(TRIM(Length_of_Stay) AS UNSIGNED) > 0) AS stays_over_zero_days,
+    SUM(TRIM(Length_of_Stay) REGEXP '^[0-9]+$' AND CAST(TRIM(Length_of_Stay) AS UNSIGNED) >= 60) AS stays_60_days_or_more
+FROM hospital_operations_raw
+GROUP BY UPPER(TRIM(Admission_Type))
+ORDER BY admission_type;
+
+-- Check whether Oxygen_Units_Used behaves like a visit-level measure.
+
+SELECT
+    UPPER(TRIM(Oxygen_Required)) AS oxygen_required,
+    COUNT(*) AS rows_with_units_recorded,
+    SUM(CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED) > 0) AS rows_with_units_above_zero
+FROM hospital_operations_raw
+WHERE TRIM(Oxygen_Units_Used) <> ''
+GROUP BY UPPER(TRIM(Oxygen_Required));
+
+SELECT TRIM(Oxygen_Units_Used) AS oxygen_units_used, COUNT(*) AS row_count
+FROM hospital_operations_raw
+WHERE TRIM(Oxygen_Units_Used) REGEXP '^[0-9]+$'
+  AND CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED) >= 400
+GROUP BY TRIM(Oxygen_Units_Used);
+
+-- Compare the supplied Season label with the month taken from Visit_Date.
+
+SELECT Season, Month, COUNT(*) AS row_count
+FROM hospital_operations_raw
+GROUP BY Season, Month
+ORDER BY Season, CAST(Month AS UNSIGNED);
 
