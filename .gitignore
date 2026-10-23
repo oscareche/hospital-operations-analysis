@@ -16,3 +16,5 @@ __pycache__/
 
 # Temporary SQL backups
 *.sql.bak
+# Local editor settings (contain database connection details)
+.vscode/

@@ -9,20 +9,20 @@ This project analyses historical hospital visit data to identify operational pat
 
 
 ## 2. Business Objectives
-The business objective is to identify patterns in patient demand and hospital resource utilisation to understand where operational resouces should be allocated and where it is highest and provide evidence that could support capacity-planning decisions.
+The objective is to analyze hospital visit demand and recorded resource requirements, assess what the available capacity measures suggest about potential operational pressure, and provide descriptive evidence to support resource allocation and capacity planning.
 
 
 ## 3. Key Business Questions
 The analysis will focus on the following questions:
 
-1. Which departments and admission types experience the highest volume of hospital visits?
-2. How does length of stay vary across departments, admission types and disease severity?
-3. How heavily are available hospital beds and ICU beds utilised?
-4. Which departments or patient groups have the greatest requirement for ICU care, oxygen and ventilation?
-5. Are there identifiable monthly, seasonal or day-of-week patterns in patient demand?
-6. Which factors appear to be associated with greater hospital resource utilisation?
-7. What patterns exist in 30-day readmissions?
-8. Are there data-quality issues that could affect the reliability of these conclusions?
+1. Which departments, diseases and admission types account for the highest hospital visit volumes?
+2. How does visit volume vary by month and day of the week, and what seasonal patterns are supported by the data?
+3. How does length of stay vary by department, admission type and severity?
+4. How do recorded bed, ICU, oxygen and ventilator requirements vary by department and patient group?
+5. What do the recorded bed and ICU occupancy measures indicate about potential capacity pressure?
+6. What patterns appear in recorded 30-day readmissions by disease, department and severity?
+
+Data-quality checks will identify issues that could affect the reliability of these measures. Capacity and resource-use results will be interpreted in light of the fields' reporting level and the dataset's limitations.
 
 
 ## 4. Analytical Scope

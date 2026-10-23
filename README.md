@@ -2,21 +2,24 @@
 
 ## Overview
 
-This project analyses a hospital operations dataset containing patient, admission, resource-use and capacity information.
+This project uses SQL to analyse hospital visit data, including patient and admission details, recorded resource requirements, and capacity measures.
 
-The analysis follows a complete SQL workflow, including data profiling, data cleaning, validation and exploratory analysis. The aim is to identify operational patterns related to patient demand, length of stay, resource requirements, hospital capacity and 30-day readmissions.
+The workflow begins with profiling the raw data and documenting data-quality issues before defining cleaning rules and conducting exploratory analysis. The analysis focuses on descriptive operational patterns and interprets capacity measures in light of the dataset's limitations.
 
-## Business Objectives
+## Business Objective
 
-The project addresses the following questions:
+The objective is to analyse hospital visit demand and recorded resource requirements, assess what available capacity measures suggest about potential operational pressure, and provide descriptive evidence to support resource allocation and capacity planning.
 
-- Which departments and diseases recorded the highest patient demand?
-- How did demand change over time?
-- How did length of stay vary by admission type and severity?
-- Which departments recorded the highest demand for beds, ICU services, oxygen and ventilators?
-- Did recorded bed or ICU occupancy exceed available capacity?
-- How did resource requirements vary by patient severity?
-- Which diseases and departments recorded the highest 30-day readmission rates?
+### Key Business Questions
+
+- Which departments, diseases and admission types account for the highest hospital visit volumes?
+- How does visit volume vary by month and day of the week, and what seasonal patterns are supported by the data?
+- How does length of stay vary by department, admission type and severity?
+- How do recorded bed, ICU, oxygen and ventilator requirements vary by department, severity, admission type and disease?
+- What do the recorded bed and ICU occupancy measures indicate about potential capacity pressure?
+- What patterns appear in recorded 30-day readmissions by disease, department and severity?
+
+Data-quality checks will identify issues that could affect the reliability of these measures. Capacity and resource-use results will be interpreted in light of the fields' reporting level and the dataset's limitations.
 
 ## Dataset Summary
 
