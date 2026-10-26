@@ -1,152 +1,119 @@
-# Hospital Operations Analysis
+# Bank Customer Churn Analysis
 
-**Question:** Where is hospital demand concentrated, is capacity holding, and which patients come back?
+**Question:** Which bank customers are leaving, and who is likely to leave next?
 
-- General Medicine carried the most demand: 1,502 of 5,075 records.
-- Capacity held: bed occupancy averaged 66.25% and ICU 52.67%, with no record over either limit.
-- Stroke patients had the highest readmission rate, at 20.60%.
+- Customers aged 46–60 churn at 51.12%, 2.5× the 20.37% base rate, in all three countries.
+- 82.71% of 3-product customers left, and every 4-product customer did.
+- Inactive customers with a balance are the biggest loss by volume: 982 of 3,105 left (31.63%).
 
-**Tools:** MySQL, Power BI, Python
+**Tools:** Google Sheets (COUNTIFS, conditional formatting, combo charts)
 
-## Overview
+## The Problem
 
-This project analyses a hospital operations dataset containing patient, admission, resource-use and capacity information.
+Banks lose customers. That's not news. But understanding *why* they leave, and more importantly *who* is likely to leave next, is the difference between reactive damage control and proactive retention. Customer churn is expensive. Acquiring a new customer costs significantly more than keeping an existing one, and every departure represents lost revenue, lost cross-selling opportunities, and a signal that something in the experience isn't working.
 
-The analysis follows a complete SQL workflow, including data profiling, data cleaning, validation and exploratory analysis. The aim is to identify operational patterns related to patient demand, length of stay, resource requirements, hospital capacity and 30-day readmissions.
+This project takes a dataset of 10,000 bank customers and digs into the patterns behind churn. The goal isn't just to describe what happened. It's to surface actionable insight that a retention team could actually use.
 
 ## Business Objectives
 
-The project addresses the following questions:
+1. Who is churning and why?
+This profiles customers who leave the bank by their demographic (age, gender, country), financial (balance, credit score, salary), and behavioural (active status, product count, tenure) characteristics to identify the common traits of a churned customer.
 
-- Which departments and diseases recorded the highest patient demand?
-- How did demand change over time?
-- How did length of stay vary by admission type and severity?
-- Which departments recorded the highest demand for beds, ICU services, oxygen and ventilators?
-- Did recorded bed or ICU occupancy exceed available capacity?
-- How did resource requirements vary by patient severity?
-- Which diseases and departments recorded the highest 30-day readmission rates?
+2. Where is the risk concentrated?
+We will try to quantify churn rates across key customer segments to identify which groups are most vulnerable and represent the greatest volume or financial exposure — so the retention team knows exactly where to focus first.
 
-## Dataset Summary
+3. What are the early warning signs?
+We will identify patterns and combinations of factors (such as zero balance paired with inactivity, or high product count with short tenure) that signal a customer is at risk of leaving before they actually do.
 
-The cleaned dataset contains 5,075 patient records covering the period from 1 January 2023 to 31 December 2024.
+## The Dataset
 
-The dataset includes information on:
+Source: [Kaggle - Bank Customer Churn Dataset](https://www.kaggle.com/datasets/gauravtopre/bank-customer-churn-dataset)
 
-- patient demographics;
-- disease and severity;
-- admission type;
-- department;
-- length of stay;
-- bed, ICU, oxygen and ventilator requirements;
-- hospital bed and ICU capacity;
-- 30-day readmission status.
+10,000 rows. 12 columns. Each row is one customer.
 
-## Tools Used
+| Column | Description | Type |
+|--------|-------------|------|
+| customer_id | Unique identifier | Numeric |
+| credit_score | Customer's credit score | Numeric |
+| country | Customer's country | Categorical |
+| gender | Customer's gender | Categorical |
+| age | Customer's age | Numeric |
+| tenure | Years with the bank | Numeric |
+| balance | Account balance | Numeric |
+| products_number | Number of bank products held | Numeric |
+| credit_card | Has a credit card (1 = yes, 0 = no) | Binary |
+| active_member | Is an active member (1 = yes, 0 = no) | Binary |
+| estimated_salary | Estimated annual salary | Numeric |
+| churn | Left the bank (1 = yes, 0 = no) | Binary |
 
-- MySQL
-- MySQL Workbench
-- Git
-- GitHub
-- Power BI
+## Approach
+This analysis follows the six phases of the data analysis process: Ask, Prepare, Process, Analyse, Share and Act.
 
-## Project Workflow
+For the **Process** phase, a full health audit was conducted following a cleaning workflow as follows:
 
-### 1. Data Profiling
-
-The raw dataset was reviewed to identify:
-
-- missing values;
-- inconsistent date formats;
-- invalid numeric values;
-- duplicate patient identifiers;
-- inconsistent categorical values;
-- operational inconsistencies.
-
-### 2. Data Cleaning
-
-The cleaning process included:
-
-- converting multiple date formats into a consistent date field;
-- converting blank text values to `NULL`;
-- trimming whitespace from categorical fields;
-- converting numeric text fields into numeric data types;
-- preserving unusual values where there was insufficient evidence to remove them.
-
-### 3. Data Validation
-
-Validation checks confirmed:
-
-- 5,075 records were retained in the cleaned table;
-- no duplicate Patient_ID values were found;
-- no records showed occupied beds exceeding available beds;
-- no records showed occupied ICU beds exceeding available ICU beds;
-- unusual resource combinations and outliers were retained and documented.
-
-### 4. Exploratory Analysis
-
-The SQL analysis covered:
-
-- overall patient activity;
-- patient demand by department and disease;
-- monthly and weekly demand patterns;
-- length-of-stay distribution;
-- OPD stay patterns;
-- resource requirements;
-- bed and ICU occupancy;
-- severity and resource intensity;
-- 30-day readmissions.
+- Built a data_health_summary sheet with COUNTA and COUNTBLANK formulas referencing raw_data to assess completeness across all 12 columns
+- Result: zero missing values across the entire dataset (100% complete on all columns)
+- Checked for and confirmed no duplicate rows
+- Removed 2 empty trailing rows (10002-10003) from cleaned_data
+- Verified text consistency in categorical columns (country, gender) using filters
+- Checked numeric ranges for impossible or suspicious values
+- Standardised all column headers to snake_case
+- Created derived columns: age_group, balance_salary_ratio, high_product_flag
+- Added readable label columns for binary fields with conditional formatting
+- Documented every cleaning decision in dedicated data_cleaning_log sheet
 
 ## Key Findings
 
-- General Medicine recorded the highest patient volume with 1,502 records.
-- Food Poisoning was the most frequently recorded disease with 374 records.
-- Patient demand remained relatively stable across the reporting period.
-- Wednesday recorded the highest patient volume, although demand was evenly distributed across the week.
-- The average length of stay was 5.10 days.
-- OPD activity was overwhelmingly same-day, although unusual OPD stays of 60 and 120 days were identified.
-- Beds were required for 66.03% of patient records.
-- Oxygen was required for 30.72% of records.
-- ICU services were required for 19.47% of records.
-- Ventilators were required for 6.17% of records.
-- Average bed occupancy was 66.25%.
-- Average ICU occupancy was 52.67%.
-- No recorded observation exceeded available bed or ICU capacity.
-- Critical patients recorded the highest ICU, oxygen and ventilator requirement percentages.
-- Severe patients recorded the highest 30-day readmission rate by severity at 19.18%.
-- Stroke recorded the highest readmission rate by disease at 20.60%.
-- ICU recorded the highest departmental readmission rate at 17.57%.
+Base churn rate: 20.37% (2,037 out of 10,000 customers left). Every finding below is measured against this benchmark.
+
+**Finding 1: The 46-60 age group is the bank's biggest churn problem**
+
+The 46-60 age bracket churns at 51.12%, which is 2.5 times the base rate. This isn't a single-market issue. It holds across all three countries: Germany (67.33%), France (45.79%), and Spain (40.66%). The 18-30 age group is the most loyal at just 7.52%. Something specific is pushing middle-aged customers away, and it's happening everywhere.
+
+**Finding 2: Customers with 3-4 products churn at catastrophic rates**
+
+82.71% of customers with 3 products left. 100% of customers with 4 products left. Every single one of the 60. And critically, even active customers with 3-4 products churn at 80.28%. Activity doesn't protect them. The pattern is sharpest in Germany: all 38 customers aged 46-60 holding 3-4 products left. This means the problem is the products themselves, not a lack of engagement. Cross-selling beyond 2 products is actively associated with customer loss.
+
+**Finding 3: Non-zero balance inactive customers are the highest-volume risk group**
+
+Customers with money in their accounts who have gone inactive churn at 31.63%. This group contains 3,105 customers with 982 churners. In absolute terms, this is where the bank loses the most customers and the most revenue. These are people with actual balances who have disengaged and are taking their money elsewhere.
+
+**Finding 4: Zero-balance customers are an opportunity, not a threat**
+
+Zero-balance customers churn at 13.82%, below the base rate. Zero-balance active customers churn at just 9.61%. These customers aren't leaving because they're not losing anything by staying. But they're also not generating revenue. They represent a re-engagement and revenue opportunity rather than a retention risk.
+
+## Business Recommendations
+
+**1. Investigate the 46-60 age group experience**
+
+Commission qualitative research (surveys, exit interviews) with 46-60 year old customers to understand why they're leaving at such elevated rates across all markets. This age group likely has specific financial needs (retirement planning, wealth management, mortgage changes) that the bank may not be serving well.
+
+**2. Audit the 3-4 product portfolio**
+
+Stop aggressive cross-selling beyond 2 products until the bank understands why multi-product customers are leaving at near-total rates. Conduct a product compatibility review to identify whether specific product combinations create friction, fees, or complexity that drives customers away.
+
+<img width="1011" height="564" alt="Product x Activity matrix" src="visualisations/Product%20x%20Activity%20matrix.png" />
+
+
+**3. Build an inactivity early warning system**
+
+Non-zero balance customers who become inactive represent the highest-volume risk group. The bank should monitor engagement metrics and trigger retention outreach when a customer with a positive balance shows declining activity. The intervention window is between "going quiet" and "formally leaving."
+
+**4. Re-engage zero-balance customers for revenue growth**
+
+Zero-balance customers are not at high risk of leaving, but they represent unrealised revenue. Design targeted campaigns to encourage savings, introduce them to fee-generating products, or offer incentives for account funding. Active zero-balance customers (9.61% churn) are especially receptive since they're already engaged with the bank.
+
+<img width="1010" height="625" alt="Composite risk profiles" src="visualisations/Composite%20risk%20profiles.png" />
 
 ## Limitations
 
-- The dataset appears to combine patient-level records with hospital-wide operational measures.
-- Capacity values may therefore be repeated across multiple patient records.
-- The analysis identifies patterns and associations but does not establish causation.
-- Resource requirement fields do not show duration of use.
-- Readmission records do not confirm whether the return visit was planned, avoidable or related to the original condition.
-- Unusual records were retained unless there was sufficient evidence that they were incorrect.
+**Snapshot data:** The dataset is a single point in time. There's no way to track how customer behaviour changed over time, when engagement declined, or what sequence of events led to churn. Time-series data would significantly strengthen the early warning analysis.
 
-## Repository Structure
 
-```text
-hospital-operations-analysis/
-│
-├── data/
-│   ├── raw/
-│   └── cleaned/
-│
-├── documentation/
-│   ├── data_dictionary.csv
-│   ├── data_quality_log.md
-│   └── project_brief.md
-│
-├── sql/
-│   ├── 01_data_profiling.sql
-│   ├── 02_data_cleaning.sql
-│   ├── 03_cleaning_validation.sql
-│   └── 04_exploratory_analysis.sql
-│
-├── powerbi/
-├── images/
-├── exports/
-├── python/
-└── README.md
+**Unknown product details:** The dataset tells you how many products a customer holds but not which products. Understanding which specific combinations drive the 3-4 product churn problem requires product-level data.
+
+**Estimated salary:** The salary column is explicitly an estimate, not verified income. Salary-based conclusions carry this uncertainty.
+
+**No causal data:** The analysis identifies associations and patterns but cannot determine causation. The 46-60 age group churns at high rates, but the data cannot tell you why. That requires qualitative research.
+
+**Small sample sizes in composite segments:** Some cross-referenced segments (e.g., Germany + 46-60 + 3-4 products at 38 customers) have small sample sizes. Percentage-based findings for these groups should be treated as directional rather than definitive.
