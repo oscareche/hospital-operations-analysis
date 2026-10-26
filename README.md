@@ -1,5 +1,13 @@
 # Hospital Operations Analysis
 
+**Question:** Where is hospital demand concentrated, is capacity holding, and which patients come back?
+
+- General Medicine carried the most demand: 1,502 of 5,075 records.
+- Capacity held: bed occupancy averaged 66.25% and ICU 52.67%, with no record over either limit.
+- Stroke patients had the highest readmission rate, at 20.60%.
+
+**Tools:** MySQL, Power BI, Python
+
 ## Overview
 
 This project analyses a hospital operations dataset containing patient, admission, resource-use and capacity information.
