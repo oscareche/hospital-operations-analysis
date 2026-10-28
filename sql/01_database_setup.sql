@@ -41,14 +41,31 @@ CREATE TABLE hospital_operations_raw (
 DESCRIBE hospital_operations_raw;
 
 -- Validate the number of imported records.
+
 SELECT 
     COUNT(*) AS Raw_Row_Count
 FROM
     hospital_operations_raw;
 
 -- Inspect the imported records.
+
 SELECT 
     *
 FROM
     hospital_operations_raw
 LIMIT 10;
+
+-- =====================================================
+-- IMPORT STEP (manual)
+-- =====================================================
+-- The raw CSV was loaded using MySQL Workbench's Table Data Import Wizard.
+-- Right-click hospital_operations_raw > Table Data Import Wizard >
+-- select data/raw/hospital_operations_dataset.csv.
+-- LOAD DATA INFILE was not used due to Mac secure-file-priv restrictions.
+-- Expected row count after import: 5,075
+-- =====================================================
+
+-- Check the total row count matches the raw CSV.
+SELECT COUNT(*) AS Raw_Row_Count
+FROM hospital_operations_raw;
+
