@@ -9,7 +9,7 @@ This project analyses historical hospital visit data to identify operational pat
 
 
 ## 2. Business Objectives
-The objective is to analyze hospital visit demand and recorded resource requirements, assess what the available capacity measures suggest about potential operational pressure, and provide descriptive evidence to support resource allocation and capacity planning.
+The objective is to analyse hospital visit demand and recorded resource requirements, assess what the available capacity measures suggest about potential operational pressure, and provide descriptive evidence to support resource allocation and capacity planning.
 
 
 ## 3. Key Business Questions
