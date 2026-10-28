@@ -8,6 +8,7 @@ USE hospital_operations;
 -- Confirm the imported row count.
 
 SELECT COUNT(*) as raw_row_count
+
 FROM hospital_operations_raw;
 
 -- Count repeated nonblank Patient_ID values. Repeated IDs are not assumed to
