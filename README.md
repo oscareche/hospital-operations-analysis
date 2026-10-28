@@ -5,7 +5,7 @@ Banks lose customers. That's not news. But understanding *why* they leave, and m
 
 This project takes a dataset of 10,000 bank customers and digs into the patterns behind churn. The goal isn't just to describe what happened. It's to surface actionable insight that a retention team could actually use.
 
-**Business Question:** Which bank customers are leaving, and who is likely to leave next?
+## Business Question Which bank customers are leaving, and who is likely to leave next?
 - Customers aged 46–60 churn at 51.12%, 2.5× the 20.37% base rate, in all three countries.
 - 82.71% of 3-product customers left, and every 4-product customer did.
 - Inactive customers with a balance are the biggest loss by volume: 982 of 3,105 left (31.63%).
