@@ -2,84 +2,97 @@
 -- HOSPITAL OPERATIONS ANALYSIS
 -- 02 - RAW DATA PROFILING
 -- =====================================================
+-- Every query in this script only reads the raw table. Nothing is changed.
+-- Expected values were confirmed against hospital_operations_raw on 29 Oct 2026.
 
 USE hospital_operations;
 
--- Confirm the imported row count.
 
-SELECT COUNT(*) as raw_row_count
+-- =====================================================
+-- 1. ROW COUNT
+-- =====================================================
 
+-- Total rows in the raw table.
+-- Expected: 5,075.
+
+SELECT
+    COUNT(*) AS raw_rows
 FROM hospital_operations_raw;
 
--- Count repeated nonblank Patient_ID values. Repeated IDs are not assumed to
--- represent duplicate visits.
 
-SELECT COUNT(*) AS repeated_patient_id_values
+-- =====================================================
+-- 2. REPEATED IDS AND DUPLICATE ROWS
+-- =====================================================
+
+-- Count Patient_IDs that appear more than once.
+-- TRIM removes stray spaces and blank IDs are excluded.
+-- Repeated IDs are not assumed to be duplicate visits at this stage.
+-- Expected: 75.
+
+SELECT
+    COUNT(*) AS repeated_patient_id_values
 FROM (
-    SELECT TRIM(Patient_ID) AS Patient_ID
+    SELECT
+        TRIM(Patient_ID) AS patient_id
     FROM hospital_operations_raw
-    WHERE Patient_ID IS NOT NULL AND TRIM(Patient_ID) <> ''
+    WHERE Patient_ID IS NOT NULL
+        AND TRIM(Patient_ID) <> ''
     GROUP BY TRIM(Patient_ID)
     HAVING COUNT(*) > 1
 ) AS repeated_ids;
+
+
+-- Compare total rows with distinct non-blank Patient_IDs.
+-- The gap between the two is the number of extra rows created by repeated IDs.
+-- DATABASE() confirms which database the connection is pointing at.
+-- Expected: hospital_operations, 5,075 rows, 5,000 distinct IDs.
 
 SELECT
     DATABASE() AS active_schema,
     COUNT(*) AS raw_rows,
     COUNT(DISTINCT NULLIF(TRIM(Patient_ID), '')) AS distinct_nonblank_patient_ids
-FROM hospital_operations.hospital_operations_raw;
+FROM hospital_operations_raw;
 
-SELECT TRIM(Patient_ID) AS patient_id, COUNT(*) AS row_count
-FROM hospital_operations.hospital_operations_raw
-WHERE Patient_ID IS NOT NULL AND TRIM(Patient_ID) <> ''
+
+-- List the most repeated Patient_IDs and how many rows each one has.
+-- If every repeated ID appears exactly twice, the top 10 will all show row_count = 2.
+-- Expected: row_count = 2 for every ID listed.
+
+SELECT
+    TRIM(Patient_ID) AS patient_id,
+    COUNT(*) AS row_count
+FROM hospital_operations_raw
+WHERE Patient_ID IS NOT NULL
+    AND TRIM(Patient_ID) <> ''
 GROUP BY TRIM(Patient_ID)
 HAVING COUNT(*) > 1
 ORDER BY row_count DESC
 LIMIT 10;
 
--- Inspect all rows associated with repeated nonblank Patient_ID values.
+
+-- Show both rows for one repeated Patient_ID so they can be compared side by side.
+-- P01403 is one example from the list above. The full check across all
+-- repeated IDs is the 22-column block below.
+-- Expected: two rows that match in every column.
 
 SELECT
-    raw.Patient_ID,
-    raw.Visit_Date,
-    raw.Age,
-    raw.Gender,
-    raw.Disease,
-    raw.Severity,
-    raw.Admission_Type,
-    raw.Length_of_Stay,
-    raw.Bed_Required,
-    raw.ICU_Required,
-    raw.Oxygen_Required,
-    raw.Ventilator_Required,
-    raw.Total_Beds_Available,
-    raw.Beds_Occupied,
-    raw.ICU_Beds_Available,
-    raw.ICU_Beds_Occupied,
-    raw.Oxygen_Units_Used,
-    raw.Month,
-    raw.Season,
-    raw.Day_of_Week,
-    raw.Department,
-    raw.Readmission_Within_30_Days
-FROM hospital_operations_raw AS raw
-JOIN (
-    SELECT TRIM(Patient_ID) AS Patient_ID
-    FROM hospital_operations_raw
-    WHERE Patient_ID IS NOT NULL AND TRIM(Patient_ID) <> ''
-    GROUP BY TRIM(Patient_ID)
-    HAVING COUNT(*) > 1
-) AS repeated_ids
-    ON TRIM(raw.Patient_ID) = repeated_ids.Patient_ID
-ORDER BY TRIM(raw.Patient_ID), raw.Visit_Date;
+    *
+FROM hospital_operations_raw
+WHERE TRIM(Patient_ID) = 'P01403';
 
--- Count exact repeated rows separately from repeated patient identifiers.
+
+-- Count groups of rows that are identical across all 22 columns.
+-- excess_exact_duplicate_rows is how many rows would be removed to keep one copy of each.
+-- MySQL's default text comparison ignores upper and lower case, so rows that differ
+-- only in case would be counted as identical here.
+-- Expected: 75 groups and 75 excess rows.
 
 SELECT
     COUNT(*) AS exact_duplicate_groups,
     COALESCE(SUM(occurrences - 1), 0) AS excess_exact_duplicate_rows
 FROM (
-    SELECT COUNT(*) AS occurrences
+    SELECT
+        COUNT(*) AS occurrences
     FROM hospital_operations_raw
     GROUP BY
         Patient_ID,
@@ -107,7 +120,15 @@ FROM (
     HAVING COUNT(*) > 1
 ) AS exact_duplicate_groups;
 
--- Profile NULL and blank text values across all raw fields.
+
+-- =====================================================
+-- 3. MISSING VALUES
+-- =====================================================
+
+-- Count missing values in every column. A value counts as missing if it is NULL
+-- or contains only spaces. Each condition returns 1 if true and 0 if false,
+-- so SUM adds up the number of rows that meet it.
+-- Expected: Gender 103, Department 77, Length_of_Stay 50, Oxygen_Units_Used 100, all others 0.
 
 SELECT
     SUM(Patient_ID IS NULL OR TRIM(Patient_ID) = '') AS missing_patient_id,
@@ -134,58 +155,201 @@ SELECT
     SUM(Readmission_Within_30_Days IS NULL OR TRIM(Readmission_Within_30_Days) = '') AS missing_readmission_flag
 FROM hospital_operations_raw;
 
--- Profile raw category values to identify inconsistent labels, casing and whitespace.
 
-SELECT 'Gender' AS field_name, Gender AS raw_value, COUNT(*) AS row_count
+-- =====================================================
+-- 4. CATEGORY LABELS
+-- =====================================================
+
+-- List every distinct value in each category column with its row count.
+-- UNION ALL stacks the separate results into one table, tagged by field name.
+-- GROUP BY here uses MySQL's case-insensitive comparison, so case variants are
+-- merged into one row. The case-sensitive check below finds those.
+-- Expected: stray-space variants in Gender, Severity, Admission_Type, Day_of_Week,
+-- Department and Readmission_Within_30_Days (45 rows). Disease and Season are consistent.
+
+SELECT
+    'Gender' AS field_name,
+    Gender AS raw_value,
+    COUNT(*) AS row_count
 FROM hospital_operations_raw
 GROUP BY Gender
+
 UNION ALL
+
 SELECT 'Disease', Disease, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Disease
+
 UNION ALL
+
 SELECT 'Severity', Severity, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Severity
+
 UNION ALL
+
 SELECT 'Admission_Type', Admission_Type, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Admission_Type
+
 UNION ALL
+
 SELECT 'Bed_Required', Bed_Required, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Bed_Required
+
 UNION ALL
+
 SELECT 'ICU_Required', ICU_Required, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY ICU_Required
+
 UNION ALL
+
 SELECT 'Oxygen_Required', Oxygen_Required, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Oxygen_Required
+
 UNION ALL
+
 SELECT 'Ventilator_Required', Ventilator_Required, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Ventilator_Required
+
 UNION ALL
+
 SELECT 'Season', Season, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Season
+
 UNION ALL
+
 SELECT 'Day_of_Week', Day_of_Week, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Day_of_Week
+
 UNION ALL
+
 SELECT 'Department', Department, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Department
+
 UNION ALL
+
 SELECT 'Readmission_Within_30_Days', Readmission_Within_30_Days, COUNT(*)
 FROM hospital_operations_raw
 GROUP BY Readmission_Within_30_Days
+
 ORDER BY field_name, raw_value;
 
--- Classify supported Visit_Date formats before converting dates or derived fields.
+
+-- Re-check the six messy fields with a case-sensitive comparison.
+-- TRIM removes the stray spaces already found, so any extra rows that appear
+-- are true case variants (e.g. MALE vs Male). The default comparison hides these.
+-- Expected: 32 rows with odd casing across the six fields, e.g. MALE, female, icu.
+
+SELECT
+    'Gender' AS field_name,
+    TRIM(Gender) COLLATE utf8mb4_bin AS cleaned_value,
+    COUNT(*) AS row_count
+FROM hospital_operations_raw
+GROUP BY TRIM(Gender) COLLATE utf8mb4_bin
+
+UNION ALL
+
+SELECT 'Severity', TRIM(Severity) COLLATE utf8mb4_bin, COUNT(*)
+FROM hospital_operations_raw
+GROUP BY TRIM(Severity) COLLATE utf8mb4_bin
+
+UNION ALL
+
+SELECT 'Admission_Type', TRIM(Admission_Type) COLLATE utf8mb4_bin, COUNT(*)
+FROM hospital_operations_raw
+GROUP BY TRIM(Admission_Type) COLLATE utf8mb4_bin
+
+UNION ALL
+
+SELECT 'Day_of_Week', TRIM(Day_of_Week) COLLATE utf8mb4_bin, COUNT(*)
+FROM hospital_operations_raw
+GROUP BY TRIM(Day_of_Week) COLLATE utf8mb4_bin
+
+UNION ALL
+
+SELECT 'Department', TRIM(Department) COLLATE utf8mb4_bin, COUNT(*)
+FROM hospital_operations_raw
+GROUP BY TRIM(Department) COLLATE utf8mb4_bin
+
+UNION ALL
+
+SELECT 'Readmission_Within_30_Days', TRIM(Readmission_Within_30_Days) COLLATE utf8mb4_bin, COUNT(*)
+FROM hospital_operations_raw
+GROUP BY TRIM(Readmission_Within_30_Days) COLLATE utf8mb4_bin
+
+ORDER BY field_name, cleaned_value;
+
+
+-- Check the remaining category fields for hidden case variants.
+-- default_distinct uses MySQL's case-insensitive comparison; case_sensitive_distinct
+-- uses an exact one. If the two numbers match for a field, it has no case variants.
+-- Expected: Disease 20, Season 5, and 2 for each yes/no field, equal in both columns.
+
+SELECT
+    'Disease' AS field_name,
+    COUNT(DISTINCT TRIM(Disease)) AS default_distinct,
+    COUNT(DISTINCT TRIM(Disease) COLLATE utf8mb4_bin) AS case_sensitive_distinct
+FROM hospital_operations_raw
+
+UNION ALL
+
+SELECT
+    'Season',
+    COUNT(DISTINCT TRIM(Season)),
+    COUNT(DISTINCT TRIM(Season) COLLATE utf8mb4_bin)
+FROM hospital_operations_raw
+
+UNION ALL
+
+SELECT
+    'Bed_Required',
+    COUNT(DISTINCT TRIM(Bed_Required)),
+    COUNT(DISTINCT TRIM(Bed_Required) COLLATE utf8mb4_bin)
+FROM hospital_operations_raw
+
+UNION ALL
+
+SELECT
+    'ICU_Required',
+    COUNT(DISTINCT TRIM(ICU_Required)),
+    COUNT(DISTINCT TRIM(ICU_Required) COLLATE utf8mb4_bin)
+FROM hospital_operations_raw
+
+UNION ALL
+
+SELECT
+    'Oxygen_Required',
+    COUNT(DISTINCT TRIM(Oxygen_Required)),
+    COUNT(DISTINCT TRIM(Oxygen_Required) COLLATE utf8mb4_bin)
+FROM hospital_operations_raw
+
+UNION ALL
+
+SELECT
+    'Ventilator_Required',
+    COUNT(DISTINCT TRIM(Ventilator_Required)),
+    COUNT(DISTINCT TRIM(Ventilator_Required) COLLATE utf8mb4_bin)
+FROM hospital_operations_raw;
+
+
+-- =====================================================
+-- 5. DATES
+-- =====================================================
+
+-- Sort each Visit_Date into a format bucket and count the rows in each.
+-- CASE WHEN checks the patterns in order and labels the row with the first one that fits.
+-- REGEXP tests the text against a pattern: [0-9]{4} means exactly four digits,
+-- ^ and $ mean the whole value must match, not just part of it.
+-- Anything that fits none of the three patterns lands in 'Other or missing'.
+-- Expected: 5,001 YYYY-MM-DD, 49 DD-MM-YYYY and 25 YYYY/MM/DD (5,075 in total).
 
 SELECT
     CASE
@@ -199,7 +363,13 @@ FROM hospital_operations_raw
 GROUP BY date_format
 ORDER BY date_format;
 
--- Check date parseability and consistency with the supplied Month and Day_of_Week.
+
+-- Convert each Visit_Date to a real DATE, then compare it with the supplied Month and Day_of_Week.
+-- WITH ... AS builds a named temporary result (a CTE) that the final SELECT then reads from.
+-- STR_TO_DATE turns text into a date using the format code for that pattern;
+-- it returns NULL if the date doesn't exist (e.g. 31-02-2024).
+-- Each SUM counts the rows meeting its condition (true = 1, false = 0).
+-- Expected: unparsed_visit_dates 0, month_mismatches 13, day_of_week_mismatches 0.
 
 WITH parsed_dates AS (
     SELECT
@@ -230,7 +400,50 @@ SELECT
     ) AS day_of_week_mismatches
 FROM parsed_dates;
 
--- Profile numeric fields for blanks, non-integer text and observed ranges.
+
+-- Compare the supplied Season with the month taken from Visit_Date.
+-- The CTE converts each date as in the block above.
+-- Sorting by month makes it easy to spot a month listed under two seasons.
+-- Expected: 12 rows, one season per month, so Season always agrees with the date
+-- and the 13 month mismatches above are errors in the Month column.
+
+WITH parsed_dates AS (
+    SELECT
+        Season,
+        CASE
+            WHEN TRIM(Visit_Date) REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN STR_TO_DATE(TRIM(Visit_Date), '%Y-%m-%d')
+            WHEN TRIM(Visit_Date) REGEXP '^[0-9]{2}-[0-9]{2}-[0-9]{4}$'
+                THEN STR_TO_DATE(TRIM(Visit_Date), '%d-%m-%Y')
+            WHEN TRIM(Visit_Date) REGEXP '^[0-9]{4}/[0-9]{2}/[0-9]{2}$'
+                THEN STR_TO_DATE(TRIM(Visit_Date), '%Y/%m/%d')
+            ELSE NULL
+        END AS parsed_visit_date
+    FROM hospital_operations_raw
+)
+SELECT
+    MONTH(parsed_visit_date) AS visit_month,
+    TRIM(Season) AS season,
+    COUNT(*) AS row_count
+FROM parsed_dates
+GROUP BY MONTH(parsed_visit_date), TRIM(Season)
+ORDER BY visit_month, season;
+
+
+-- =====================================================
+-- 6. NUMERIC FIELDS
+-- =====================================================
+
+-- Profile each numeric column for blanks, non-numeric text and the range of values.
+-- The inner query stacks the eight columns into one list (field_name, raw_value)
+-- with UNION ALL, so the outer query can profile them all in one pass.
+-- REGEXP '^-?[0-9]+$' tests for a whole number (optional minus sign, then digits only).
+-- CASE WHEN ... THEN CAST(... AS SIGNED) converts to a number only when the text is a
+-- valid whole number, so MIN and MAX ignore anything else.
+-- Each SUM counts the rows meeting its condition (true = 1, false = 0).
+-- Expected: no non-integer or negative values in any column; blanks in Length_of_Stay (50)
+-- and Oxygen_Units_Used (100); Age 0 to 120; Length_of_Stay up to 120;
+-- Oxygen_Units_Used up to 999; Month 1 to 12 with no blanks.
 
 SELECT
     field_name,
@@ -242,22 +455,48 @@ SELECT
     SUM(raw_value REGEXP '^-?[0-9]+$' AND CAST(raw_value AS SIGNED) = 0) AS zero_values
 FROM (
     SELECT 'Age' AS field_name, TRIM(Age) AS raw_value FROM hospital_operations_raw
-    UNION ALL SELECT 'Length_of_Stay', TRIM(Length_of_Stay) FROM hospital_operations_raw
-    UNION ALL SELECT 'Total_Beds_Available', TRIM(Total_Beds_Available) FROM hospital_operations_raw
-    UNION ALL SELECT 'Beds_Occupied', TRIM(Beds_Occupied) FROM hospital_operations_raw
-    UNION ALL SELECT 'ICU_Beds_Available', TRIM(ICU_Beds_Available) FROM hospital_operations_raw
-    UNION ALL SELECT 'ICU_Beds_Occupied', TRIM(ICU_Beds_Occupied) FROM hospital_operations_raw
-    UNION ALL SELECT 'Oxygen_Units_Used', TRIM(Oxygen_Units_Used) FROM hospital_operations_raw
-    UNION ALL SELECT 'Month', TRIM(Month) FROM hospital_operations_raw
+    UNION ALL
+    SELECT 'Length_of_Stay', TRIM(Length_of_Stay) FROM hospital_operations_raw
+    UNION ALL
+    SELECT 'Total_Beds_Available', TRIM(Total_Beds_Available) FROM hospital_operations_raw
+    UNION ALL
+    SELECT 'Beds_Occupied', TRIM(Beds_Occupied) FROM hospital_operations_raw
+    UNION ALL
+    SELECT 'ICU_Beds_Available', TRIM(ICU_Beds_Available) FROM hospital_operations_raw
+    UNION ALL
+    SELECT 'ICU_Beds_Occupied', TRIM(ICU_Beds_Occupied) FROM hospital_operations_raw
+    UNION ALL
+    SELECT 'Oxygen_Units_Used', TRIM(Oxygen_Units_Used) FROM hospital_operations_raw
+    UNION ALL
+    SELECT 'Month', TRIM(Month) FROM hospital_operations_raw
 ) AS numeric_fields
 GROUP BY field_name
 ORDER BY field_name;
 
--- Check resource-field combinations and recorded occupancy against capacity.
+
+-- =====================================================
+-- 7. CONTRADICTIONS BETWEEN COLUMNS
+-- =====================================================
+
+-- Look for rows where related columns contradict each other.
+-- icu_yes_bed_no: ICU needed but no bed needed (an ICU stay should include a bed).
+-- ventilator_yes_oxygen_no: ventilator needed but no oxygen needed.
+-- bed_occupancy_over_capacity: more beds occupied than beds available.
+-- icu_occupancy_over_capacity: more ICU beds occupied than ICU beds available.
+-- UPPER(TRIM(...)) makes the Yes/No test ignore stray spaces and case.
+-- REGEXP '^[0-9]+$' makes sure the text is a whole number before it is converted and compared.
+-- Each SUM counts the rows meeting its condition (true = 1, false = 0).
+-- Expected: icu_yes_bed_no 94, ventilator_yes_oxygen_no 62, and 0 for both capacity checks.
 
 SELECT
-    SUM(UPPER(TRIM(ICU_Required)) = 'YES' AND UPPER(TRIM(Bed_Required)) = 'NO') AS icu_yes_bed_no,
-    SUM(UPPER(TRIM(Ventilator_Required)) = 'YES' AND UPPER(TRIM(Oxygen_Required)) = 'NO') AS ventilator_yes_oxygen_no,
+    SUM(
+        UPPER(TRIM(ICU_Required)) = 'YES'
+        AND UPPER(TRIM(Bed_Required)) = 'NO'
+    ) AS icu_yes_bed_no,
+    SUM(
+        UPPER(TRIM(Ventilator_Required)) = 'YES'
+        AND UPPER(TRIM(Oxygen_Required)) = 'NO'
+    ) AS ventilator_yes_oxygen_no,
     SUM(
         Beds_Occupied REGEXP '^[0-9]+$'
         AND Total_Beds_Available REGEXP '^[0-9]+$'
@@ -270,27 +509,55 @@ SELECT
     ) AS icu_occupancy_over_capacity
 FROM hospital_operations_raw;
 
--- Review ages at the extremes of the recorded range.
 
-SELECT TRIM(Age) AS age, COUNT(*) AS row_count
+-- =====================================================
+-- 8. UNUSUAL VALUES
+-- =====================================================
+
+-- List the ages at the extremes of the range: zero, or over 100.
+-- CAST(... AS SIGNED) turns the text age into a number. Grouping and sorting
+-- on that same number keeps MySQL's only_full_group_by mode happy.
+-- Expected: 2 at age 0, 1 at age 110, 5 at age 120. None are among the 75 copies.
+
+SELECT
+    CAST(TRIM(Age) AS SIGNED) AS age,
+    COUNT(*) AS row_count
 FROM hospital_operations_raw
 WHERE CAST(TRIM(Age) AS SIGNED) = 0
-   OR CAST(TRIM(Age) AS SIGNED) > 100
-GROUP BY TRIM(Age)
+    OR CAST(TRIM(Age) AS SIGNED) > 100
+GROUP BY CAST(TRIM(Age) AS SIGNED)
 ORDER BY CAST(TRIM(Age) AS SIGNED);
 
--- Check length of stay against admission type. OPD visits are expected to be same-day.
+
+-- Compare length of stay with admission type.
+-- OPD (outpatient) visits are expected to be same-day, so a stay above 0 is suspect.
+-- UPPER(TRIM(...)) merges the spacing and case variants into one label.
+-- REGEXP '^[0-9]+$' skips blank stays before converting the text to a number.
+-- Each SUM counts the rows meeting its condition (true = 1, false = 0).
+-- Expected: all zero-day stays are OPD; 52 OPD visits with a stay above 0;
+-- 6 stays of 60 days or more in total (2 per admission type).
 
 SELECT
     UPPER(TRIM(Admission_Type)) AS admission_type,
     SUM(TRIM(Length_of_Stay) = '0') AS zero_day_stays,
-    SUM(TRIM(Length_of_Stay) REGEXP '^[0-9]+$' AND CAST(TRIM(Length_of_Stay) AS UNSIGNED) > 0) AS stays_over_zero_days,
-    SUM(TRIM(Length_of_Stay) REGEXP '^[0-9]+$' AND CAST(TRIM(Length_of_Stay) AS UNSIGNED) >= 60) AS stays_60_days_or_more
+    SUM(
+        TRIM(Length_of_Stay) REGEXP '^[0-9]+$'
+        AND CAST(TRIM(Length_of_Stay) AS UNSIGNED) > 0
+    ) AS stays_over_zero_days,
+    SUM(
+        TRIM(Length_of_Stay) REGEXP '^[0-9]+$'
+        AND CAST(TRIM(Length_of_Stay) AS UNSIGNED) >= 60
+    ) AS stays_60_days_or_more
 FROM hospital_operations_raw
 GROUP BY UPPER(TRIM(Admission_Type))
 ORDER BY admission_type;
 
--- Check whether Oxygen_Units_Used behaves like a visit-level measure.
+
+-- Check whether Oxygen_Units_Used behaves like a per-visit measure.
+-- If it were per visit, visits that did not need oxygen should record 0 units.
+-- Blank units are excluded so CAST only sees numbers.
+-- Expected: NO 3,450 rows recorded, 2,877 above zero; YES 1,525 recorded, 1,525 above zero.
+-- Most no-oxygen visits record units, so the column looks like a hospital-level figure.
 
 SELECT
     UPPER(TRIM(Oxygen_Required)) AS oxygen_required,
@@ -300,16 +567,16 @@ FROM hospital_operations_raw
 WHERE TRIM(Oxygen_Units_Used) <> ''
 GROUP BY UPPER(TRIM(Oxygen_Required));
 
-SELECT TRIM(Oxygen_Units_Used) AS oxygen_units_used, COUNT(*) AS row_count
+
+-- List unusually high Oxygen_Units_Used values (400 or more) with their counts.
+-- Grouping and sorting on the same converted number avoids the only_full_group_by error.
+-- Expected: 2 each at 500, 800 and 999 (6 in total). The highest normal value is 390.
+
+SELECT
+    CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED) AS oxygen_units_used,
+    COUNT(*) AS row_count
 FROM hospital_operations_raw
 WHERE TRIM(Oxygen_Units_Used) REGEXP '^[0-9]+$'
-  AND CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED) >= 400
-GROUP BY TRIM(Oxygen_Units_Used);
-
--- Compare the supplied Season label with the month taken from Visit_Date.
-
-SELECT Season, Month, COUNT(*) AS row_count
-FROM hospital_operations_raw
-GROUP BY Season, Month
-ORDER BY Season, CAST(Month AS UNSIGNED);
-
+    AND CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED) >= 400
+GROUP BY CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED)
+ORDER BY CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED);
