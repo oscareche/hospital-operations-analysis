@@ -580,3 +580,39 @@ WHERE TRIM(Oxygen_Units_Used) REGEXP '^[0-9]+$'
     AND CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED) >= 400
 GROUP BY CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED)
 ORDER BY CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED);
+
+
+-- =====================================================
+-- 9. EVIDENCE FOR CLEANING DECISIONS
+-- =====================================================
+
+-- Compare average length of stay with and without stays of 60 days or more.
+-- SELECT DISTINCT * in the subquery removes the 75 exact copies first.
+-- UPPER(TRIM(...)) merges the spacing and case variants of each admission type.
+-- NULLIF turns blank stays into NULL, so COUNT and AVG skip them.
+-- The CASE WHEN returns NULL for stays of 60+ days, so AVG skips those too.
+-- Expected: Emergency 9.26 vs 9.14, Inpatient 6.47 vs 6.39, OPD 0.17 vs 0.06 (4,950 stays).
+-- Excluding 60+ day stays changes admitted averages by about 0.1 day, and the
+-- "under 60 days" figures match the README. Decision: flag long stays, keep them
+-- in the clean table, and exclude them and OPD from length-of-stay averages.
+
+SELECT
+    UPPER(TRIM(Admission_Type)) AS admission_type,
+    COUNT(NULLIF(TRIM(Length_of_Stay), '')) AS stays_recorded,
+    ROUND(AVG(CAST(NULLIF(TRIM(Length_of_Stay), '') AS UNSIGNED)), 2) AS avg_stay_all,
+    ROUND(
+        AVG(
+            CASE
+                WHEN CAST(NULLIF(TRIM(Length_of_Stay), '') AS UNSIGNED) < 60
+                    THEN CAST(NULLIF(TRIM(Length_of_Stay), '') AS UNSIGNED)
+            END
+        ),
+        2
+    ) AS avg_stay_under_60_days
+FROM (
+    SELECT DISTINCT
+        *
+    FROM hospital_operations_raw
+) AS unique_rows
+GROUP BY UPPER(TRIM(Admission_Type))
+ORDER BY admission_type;
