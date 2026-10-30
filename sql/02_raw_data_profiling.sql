@@ -3,7 +3,8 @@
 -- 02 - RAW DATA PROFILING
 -- =====================================================
 -- Every query in this script only reads the raw table. Nothing is changed.
--- Expected values were confirmed against hospital_operations_raw on 29 Oct 2026.
+-- Expected values were confirmed against hospital_operations_raw on 29 Oct 2026,
+-- except the visit date range in section 5, confirmed on 30 Oct 2026.
 
 USE hospital_operations;
 
@@ -430,6 +431,31 @@ GROUP BY MONTH(parsed_visit_date), TRIM(Season)
 ORDER BY visit_month, season;
 
 
+-- Find the earliest and latest visit dates across all three date formats.
+-- The CTE converts each date as in the blocks above, then MIN and MAX pick
+-- the first and last. This confirms the period the analysis covers, which
+-- question 2 (monthly and seasonal patterns) depends on.
+-- Expected: first_visit 2023-01-01, last_visit 2024-12-31.
+
+WITH parsed_dates AS (
+    SELECT
+        CASE
+            WHEN TRIM(Visit_Date) REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN STR_TO_DATE(TRIM(Visit_Date), '%Y-%m-%d')
+            WHEN TRIM(Visit_Date) REGEXP '^[0-9]{2}-[0-9]{2}-[0-9]{4}$'
+                THEN STR_TO_DATE(TRIM(Visit_Date), '%d-%m-%Y')
+            WHEN TRIM(Visit_Date) REGEXP '^[0-9]{4}/[0-9]{2}/[0-9]{2}$'
+                THEN STR_TO_DATE(TRIM(Visit_Date), '%Y/%m/%d')
+            ELSE NULL
+        END AS parsed_visit_date
+    FROM hospital_operations_raw
+)
+SELECT
+    MIN(parsed_visit_date) AS first_visit,
+    MAX(parsed_visit_date) AS last_visit
+FROM parsed_dates;
+
+
 -- =====================================================
 -- 6. NUMERIC FIELDS
 -- =====================================================
@@ -570,7 +596,7 @@ GROUP BY UPPER(TRIM(Oxygen_Required));
 
 -- List unusually high Oxygen_Units_Used values (400 or more) with their counts.
 -- Grouping and sorting on the same converted number avoids the only_full_group_by error.
--- Expected: 2 each at 500, 800 and 999 (6 in total). The highest normal value is 390.
+-- Expected: 2 each at 500, 800 and 999 (6 in total). Every other value is below 400.
 
 SELECT
     CAST(TRIM(Oxygen_Units_Used) AS UNSIGNED) AS oxygen_units_used,
