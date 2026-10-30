@@ -73,18 +73,20 @@ The raw data is stored in:
 
 `hospital_operations_raw`
 
-All raw fields are initially stored as TEXT to preserve source values before data-quality assessment and cleaning.
+All raw fields are initially stored as `TEXT` to preserve source values before data-quality assessment and cleaning.
 
 ## 6. Dataset Grain
 
 Each row represents one hospital visit or admission event.
 
-A patient may appear in more than one row if they have multiple hospital visits.
+The brief originally assumed that a patient could appear in more than one row. Profiling showed otherwise. The raw table holds 75 exact duplicate rows, and once they are removed, all 5,000 remaining visits have a distinct `Patient_ID`.
+
 
 Therefore:
 
-- `COUNT(*)` represents visit or encounter volume.
-- `COUNT(DISTINCT Patient_ID)` represents unique patients.
+- `COUNT(*)` represents visit volume.
+- Visits and patients cannot be told apart in this dataset, because no patient has more than one visit. The analysis reports visits throughout.
+- Repeat attendance is captured only through the `Readmission_Within_30_Days` field, not through repeated IDs.
 
 This distinction will be maintained throughout the analysis.
 
@@ -125,7 +127,7 @@ The project will be considered successful if it:
 
 - Produces a reproducible raw-to-clean data workflow.
 - Identifies and documents material data-quality issues.
-- Clearly distinguishes hospital visits from unique patients.
+- Confirms the dataset grain and reports visit volume consistently.
 - Produces reliable operational metrics for demand and resource utilisation.
 - Answers the agreed business questions using validated data.
 - Communicates findings in a form that could support operational decision-making.
@@ -136,7 +138,6 @@ The project will be considered successful if it:
 - MySQL
 - VS Code
 - SQLTools
-- Python
 - Power BI
 - Git
 - GitHub
@@ -144,6 +145,6 @@ The project will be considered successful if it:
 
 ## 11. Current Project Phase
 
-**Current phase:** Exploratory analysis complete.
+**Current phase:** Current phase: data profiling complete and re-verified (October 2026). Cleaning, validation and analysis in progress..
 
 Profiling, cleaning, validation and exploratory analysis are scripted in `sql/01` to `sql/05`. Findings and recommendations are in the README. A Power BI dashboard is the remaining deliverable.
