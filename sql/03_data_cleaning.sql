@@ -15,7 +15,9 @@
 --   4. Derive month, day of week and season from Visit_Date (DQ-009).
 --   5. Convert blank text to NULL and numeric text to integers (DQ-006).
 --   6. Keep unusual values but flag them so analysis can include or
---      exclude them deliberately (DQ-003, DQ-004, DQ-005, DQ-010, DQ-011).
+--      exclude them deliberately (DQ-004, DQ-005, DQ-009, DQ-010).
+--   7. Leave Age and Oxygen_Units_Used as recorded, with no flag, because
+--      neither is used for patient-level analysis (DQ-003, DQ-011).
 
 USE hospital_operations;
 
@@ -111,7 +113,8 @@ SELECT
     MONTH(visit_date) AS visit_month,
     DAYNAME(visit_date) AS visit_day_of_week,
 
-    -- Season follows the dominant month-to-season pattern in the source data.
+    -- Season follows the month-to-season pattern in the source data, which
+    -- profiling showed is consistent in every row (one season per month).
     CASE
         WHEN MONTH(visit_date) IN (12, 1, 2) THEN 'Winter'
         WHEN MONTH(visit_date) IN (3, 4) THEN 'Spring'
@@ -141,16 +144,15 @@ SELECT
     readmitted_within_30_days,
 
     -- Review flags. Records are retained; analysis decides how to treat them.
-    (age = 0 OR age > 105) AS flag_age_review,
     COALESCE(admission_type = 'OPD' AND length_of_stay > 0, 0) AS flag_opd_with_stay,
     COALESCE(length_of_stay >= 60, 0) AS flag_long_stay,
-    COALESCE(oxygen_units_used >= 500, 0) AS flag_oxygen_units_extreme,
     (icu_required AND NOT bed_required) AS flag_icu_without_bed,
     (ventilator_required AND NOT oxygen_required) AS flag_ventilator_without_oxygen,
     (source_month <> MONTH(visit_date)) AS flag_source_month_mismatch
 FROM typed;
 
 -- Confirm the cleaned row count: 5,075 raw rows less 75 exact duplicates.
+-- Expected: 5,000.
 
 SELECT COUNT(*) AS clean_row_count
 FROM hospital_operations_clean;
