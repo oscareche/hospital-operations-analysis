@@ -1,5 +1,7 @@
 # Hospital Operations Analysis
 
+**Status:** data profiling complete and re-verified (October 2026). Cleaning, validation and analysis in progress.
+
 ## Overview
 
 This project uses SQL to analyse hospital visit data, including patient and admission details, recorded resource requirements, and capacity measures.
@@ -23,9 +25,20 @@ The objective is to analyse hospital visit demand and recorded resource requirem
 
 **Source:** Kaggle – Hospital Operations Dataset – Unclean Data
 
-- **Raw:** 5,075 rows, 22 fields, imported into MySQL with every field stored as `TEXT` so no source values were altered on import.
-- **Cleaned:** 5,000 visits from 1 January 2023 to 31 December 2024, after removing 75 exact duplicate rows.
+- **Raw:** 5,075 rows and 22 fields, imported into MySQL with every field stored as `TEXT` so no source values were altered on import.
+- **Period:** visits from 1 January 2023 to 31 December 2024.
+- **Duplicates:** 75 rows are exact copies. Once they are removed, 5,000 visits remain.
 - **Grain:** one row per hospital visit. After de-duplication, every visit has a distinct `Patient_ID`.
+
+## Workflow
+
+1. [`01_database_setup.sql`](sql/01_database_setup.sql): creates the database and an all-`TEXT` raw table.
+2. [`02_raw_data_profiling.sql`](sql/02_raw_data_profiling.sql): checks the raw data for duplicates, blanks, inconsistent labels, date formats, unusual values and contradictions.
+3. [`03_data_cleaning.sql`](sql/03_data_cleaning.sql): builds a separate clean table without changing the raw data.
+4. [`04_cleaning_validation.sql`](sql/04_cleaning_validation.sql): confirms the cleaning worked as intended.
+5. [`05_exploratory_analysis.sql`](sql/05_exploratory_analysis.sql): answers the six business questions.
+
+Every data-quality issue, its evidence and the decision taken are recorded in the [data quality log](documentation/data_quality_log.md).
 
 ## Tools Used
 
