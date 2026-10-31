@@ -18,6 +18,8 @@
 --      exclude them deliberately (DQ-004, DQ-005, DQ-009, DQ-010).
 --   7. Leave Age and Oxygen_Units_Used as recorded, with no flag, because
 --      neither is used for patient-level analysis (DQ-003, DQ-011).
+--   8. Set one collation across the clean table so its text columns can be
+--      compared with the raw table's.
 
 USE hospital_operations;
 
@@ -150,6 +152,15 @@ SELECT
     (ventilator_required AND NOT oxygen_required) AS flag_ventilator_without_oxygen,
     (source_month <> MONTH(visit_date)) AS flag_source_month_mismatch
 FROM typed;
+
+-- Force every text column to one collation, matching the raw table.
+-- Columns copied from raw keep its collation, but columns built from text
+-- written in this script (the CASE mappings, the season labels) inherit the
+-- connection's collation instead. Left mixed, any comparison between the two
+-- tables fails with "illegal mix of collations".
+
+ALTER TABLE hospital_operations_clean
+    CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 -- Confirm the cleaned row count: 5,075 raw rows less 75 exact duplicates.
 -- Expected: 5,000.
