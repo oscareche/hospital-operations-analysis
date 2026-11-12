@@ -17,7 +17,11 @@ SELECT
     COUNT(*) AS visits,
     MIN(visit_date) AS first_visit,
     MAX(visit_date) AS last_visit,
-    ROUND(AVG(CASE WHEN admission_type <> 'OPD' THEN length_of_stay END), 2) AS avg_stay_days_admitted,
+    ROUND(AVG(CASE
+                  WHEN admission_type IN ('Inpatient', 'Emergency')
+                       AND flag_long_stay = 0
+                  THEN length_of_stay
+              END), 2) AS avg_stay_days_admitted_excl_long,
     ROUND(100.0 * SUM(bed_required) / COUNT(*), 2) AS bed_required_pct,
     ROUND(100.0 * SUM(icu_required) / COUNT(*), 2) AS icu_required_pct,
     ROUND(100.0 * SUM(oxygen_required) / COUNT(*), 2) AS oxygen_required_pct,
