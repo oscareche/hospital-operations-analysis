@@ -72,12 +72,13 @@ FROM hospital_operations_clean;
 
 -- 6. Review flags.
 -- Age and oxygen units are kept as recorded with no flag (DQ-003, DQ-011),
--- so only the five agreed flags are checked here.
--- Expected: OPD with stay 52, long stay 6, ICU without bed 93,
--- ventilator without oxygen 61, source month mismatch 13.
+-- so only the six agreed flags are checked here.
+-- Expected: OPD with stay 52, OPD with resource 320, long stay 6,
+-- ICU without bed 93, ventilator without oxygen 61, source month mismatch 13.
 
 SELECT
     SUM(flag_opd_with_stay) AS opd_with_stay,
+    SUM(flag_opd_with_resource) AS opd_with_resource,
     SUM(flag_long_stay) AS long_stay,
     SUM(flag_icu_without_bed) AS icu_without_bed,
     SUM(flag_ventilator_without_oxygen) AS ventilator_without_oxygen,

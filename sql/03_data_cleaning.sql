@@ -15,7 +15,7 @@
 --   4. Derive month, day of week and season from Visit_Date (DQ-009).
 --   5. Convert blank text to NULL and numeric text to integers (DQ-006).
 --   6. Keep unusual values but flag them so analysis can include or
---      exclude them deliberately (DQ-004, DQ-005, DQ-009, DQ-010).
+--      exclude them deliberately (DQ-004, DQ-005, DQ-009, DQ-010, DQ-013).
 --   7. Leave Age and Oxygen_Units_Used as recorded, with no flag, because
 --      neither is used for patient-level analysis (DQ-003, DQ-011).
 --   8. Set one collation across the clean table so its text columns can be
@@ -147,6 +147,8 @@ SELECT
 
     -- Review flags. Records are retained; analysis decides how to treat them.
     COALESCE(admission_type = 'OPD' AND length_of_stay > 0, 0) AS flag_opd_with_stay,
+    COALESCE(admission_type = 'OPD'
+             AND (bed_required OR icu_required OR ventilator_required), 0) AS flag_opd_with_resource,
     COALESCE(length_of_stay >= 60, 0) AS flag_long_stay,
     (icu_required AND NOT bed_required) AS flag_icu_without_bed,
     (ventilator_required AND NOT oxygen_required) AS flag_ventilator_without_oxygen,
