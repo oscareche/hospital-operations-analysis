@@ -1,6 +1,6 @@
 # Hospital Operations Analysis
 
-**Status:** data profiling complete and re-verified (October 2026). Cleaning, validation and analysis in progress.
+**Status:** profiling, cleaning and validation complete and re-verified (October 2026). Exploratory analysis in progress (November 2026).
 
 ## Overview
 
@@ -20,6 +20,8 @@ The objective is to analyse hospital visit demand and recorded resource requirem
 4. How do recorded bed, ICU, oxygen and ventilator requirements vary by department, severity and admission type?
 5. What do the recorded bed and ICU occupancy measures indicate about potential capacity pressure?
 6. What patterns appear in recorded 30-day readmissions by disease, department and severity?
+
+Question 5 is answered as a negative finding. The bed, ICU and oxygen-unit figures are recorded separately on each visit row and vary within a single date, so they cannot measure capacity pressure. The evidence is in the [data quality log](documentation/data_quality_log.md) under DQ-012.
 
 ## Dataset
 

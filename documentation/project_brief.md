@@ -24,6 +24,8 @@ The analysis will focus on the following questions:
 
 Data-quality checks will identify issues that could affect the reliability of these measures. Capacity and resource-use results will be interpreted in light of the fields' reporting level and the dataset's limitations.
 
+**Update, November 2026:** question 5 is answered as a negative finding. Exploratory analysis showed that the capacity, occupancy and oxygen-unit fields are recorded separately on each visit row and vary within a single date (DQ-012 in the data quality log), so they cannot measure capacity pressure. The fields stay in the clean table but are not used for capacity analysis or the dashboard.
+
 
 ## 4. Analytical Scope
 
@@ -145,6 +147,6 @@ The project will be considered successful if it:
 
 ## 11. Current Project Phase
 
-**Current phase:** Current phase: data profiling complete and re-verified (October 2026). Cleaning, validation and analysis in progress..
+**Current phase:** profiling, cleaning and validation complete and re-verified (October 2026). Exploratory analysis in progress (November 2026).
 
-Profiling, cleaning, validation and exploratory analysis are scripted in `sql/01` to `sql/05`. Findings and recommendations are in the README. A Power BI dashboard is the remaining deliverable.
+Profiling, cleaning, validation and exploratory analysis are scripted in `sql/01` to `sql/05`. Findings and recommendations will be added to the README once each is reproduced. A Power BI dashboard is the remaining deliverable.
